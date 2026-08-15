@@ -9,25 +9,29 @@
 
 ## 1. Trigger & loop type
 
-**Chosen type:** _heartbeat · cron · hook · goal_
+**Chosen type:** Hook (primary) + Cron (backup)
 
-_Why this type? (e.g. a Monday-morning cron that assembles the weekly update, plus a hook on a new PRD to propose stories.)_
+**Why:** Hook fires in direct response to the event, someone asking for the update. A Friday 9am cron backup sweep guards against a week going by where nobody explicitly asks, so it doesn't silently get skipped.
+
+**Ruled out:** Heartbeat, doesn't need constant checking, there's no reason to poll. Goal, not needed for this task; it's not an open-ended "keep working until X" problem.
+
+**Dedupe:** Cortex dedupes by message ID before drafting, so a retried or duplicate inbound message doesn't trigger a second draft.
 
 ## 2. Goal / definition of done
 
-_What outcome is this loop responsible for? For a goal loop, what validation says "done"? (e.g. a status update grounded in real activity, queued for review, nothing posted.)_
+A status update grounded in real pulled activity, critic-validated (or escalated if it can't pass), queued for human review. Cortex never posts it itself.
 
 ## 3. Stop conditions
 
 | Condition | What it looks like | What happens |
 |---|---|---|
-| **Success** | _…_ | _…_ |
-| **Stuck / give up** | _…_ | _escalate / log / halt_ |
-| **Escalate to human** | _…_ | _HITL checkpoint (from agent-line-map)_ |
+| **Success** | Critic returns `"verdict": "pass"` on the draft | Draft is held for human review; loop ends cleanly |
+| **Stuck / give up** | Revision cap hit — critic rejects the same draft twice (2/2) | Cortex stops looping, logs the failure, escalates instead of trying a third time |
+| **Escalate to human** | Ties to M1 HITL checkpoints #8a (posting anything) and #6 (choosing what to escalate); also fires if a CONFIDENTIAL roadmap item would otherwise leak into a company-wide update | Draft held, human notified, nothing posted |
 
 ## 4. State
 
-_What persists across iterations, and what's the scope? (e.g. per-project context and last week's update; no cross-project confidential leakage.)_
+The roadmap, team norms, and past-update history persist across runs as ground truth Cortex checks itself against, plus a log of already-processed message IDs (for dedupe). Scoped per-project — no cross-project confidential leakage.
 
 ## 5. The five things a loop can lean on
 
@@ -35,11 +39,11 @@ _`state` is always-on. `connectors` only if you already have one wired (e.g. a J
 
 | Component | For Cortex |
 |---|---|
-| **Work tree** (isolated workspace per run, a git worktree) | _…_ |
-| **Skills** (reusable capabilities) | _…_ |
-| **Plugins / connectors** (tools & access, optional if you don't have one yet) | _…_ |
+| **Work tree** (isolated workspace per run, a git worktree) | Not needed yet, because Cortex doesn't touch code or need an isolated workspace per run, it only reads data and drafts text. |
+| **Skills** (reusable capabilities) | Not needed yet, because there's only one task type (status update), no reusable capability library to build out yet. |
+| **Plugins / connectors** (tools & access, optional if you don't have one yet) | Not wired yet, current tools (`get_project`, `get_activity`, etc.) run against local mock fixtures. Plan: connect to Jira + GitHub via MCP. |
 | **Subagents** (independent check when the loop can't grade itself) | _placeholder → M3 orchestration-map.md_ |
-| **State tracking** | _…_ |
+| **State tracking** | See §4 State above, roadmap/norms/past-updates + processed message IDs. |
 
 > Context plan (M4) and the hand-off to bounds & evals (M5) come in later modules — you'll add them to their own deliverables then, not here.
 
