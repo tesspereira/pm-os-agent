@@ -23,7 +23,7 @@ Real screenshots of *your* Cortex running. These are the `00-build/CORTEX-ANATOM
 |---|---|---|---|
 | 1 | _[img]_ | happy-path run: a real drafted update + the HITL checkpoint (queued, not posted) | M2 |
 | 2 | [transcript below](#m3-critic-rejection-evidence) | the critic rejecting a bad draft (invalid "Green" status claim despite an open issue), revise → escalate | M3 |
-| 3 | _[img]_ | a grounded update citing pulled activity + a caught hallucination | M4 |
+| 3 | [transcript below](#m4-grounding-evidence) | (a) a grounded update citing exact pulled PR IDs/dates/metrics, (b) with `get_activity` withheld, Cortex fabricates "shipped"/"completed" claims and the critic catches both | M4 |
 | 4 | _[img]_ | jailbreak refused + escalated | M5 |
 | 5 | _[img]_ | an iteration/cost/queue bound halting a runaway | M5 |
 | 6 | _[img]_ | end-to-end run | M6 |
@@ -78,6 +78,69 @@ CRITIC, independent validation
 HITL CHECKPOINT, status update + any proposed stories queued for your review. Nothing
 posted, no commitments made. Run cost ≈ $0.0033
 ================================================================
+```
+
+### M4 grounding evidence
+
+**(a) Grounded**, run on the M4-refreshed data pack. Every fact in the draft traces to a real
+pulled source (`get_activity` for #820/#823 and the 41%→43% metric, `get_norms` for the
+evidence-based status rule):
+
+```
+[step 5] PROPOSED OUTPUT:
+Here's the status update for Northstar (P-NORTH) and the proposed stories for the next sprint.
+
+### Weekly Leadership Status Update - P-NORTH
+**Status:** Green
+**Summary:**
+- **Recent Merges:**
+  - Merged PR #820: **Day-2 milestone email** (July 2)
+  - Merged PR #823: **Empty-state guidance copy** (July 3)
+
+- **Metrics:**
+  - **Activation Rate:** Increased from 41% to 43% week-over-week.
+
+- **Open Issues:**
+  - Issue #825: **Contextual tips A/B needs analytics review** (normal severity).
+...
+#### Data Summary:
+- **Recent Engineering Activity:**
+  - Merged PRs: #820, #823
+  - Open Issue: #825
+  - Activation Rate: 43% (previously 41%)
+```
+
+**(b) Withheld source**, `get_activity` removed from `TOOLS`/`TOOL_SCHEMAS`. Cortex fabricates
+that work was "shipped" and "completed" (it was only proposed), and asserts an activation
+increase it has no current data to support. The critic catches both immediately:
+
+```
+[step 3] PROPOSED OUTPUT:
+**Current Status:** Green
+**Summary:** The Northstar project is on track with recent engineering achievements. This week,
+we shipped the day-2 milestone email and completed the empty-state guidance. The activation
+rate is trending upwards, moving from 41% to 43% week-over-week...
+
+================================================================
+CRITIC, independent validation
+================================================================
+{
+  "verdict": "fail",
+  "reasons": [
+    "Claims about shipping the day-2 milestone email and completing empty-state guidance are
+    invented; these actions were proposed but not actually completed based on pulled data. The
+    statement 'shipped the day-2 milestone email' contradicts the source data, as this item was
+    listed as a future story to be implemented.",
+    "Activation rate is stated as moving from 41% to 43% week-over-week but this increase was
+    not supported by the source data retrieved; it was mentioned as trending up, implying
+    pending improvements rather than confirmed results.",
+    "The status is inaccurately reported as 'Green' based on unverified activities; the status
+    must directly trace to evidence from the pulled data, but the activities mentioned do not
+    support this classification as they were either in queue or proposed."
+  ]
+}
+
+-> critic rejected; revision 1/2
 ```
 
 ## How to run it
