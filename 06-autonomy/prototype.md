@@ -6,14 +6,14 @@
 
 ## What it does
 
-_One paragraph: the agent in action, end to end._
+Cortex is a PM chief-of-staff agent that, given a task brief, pulls project state, engineering activity, roadmap, norms, and past-update precedent, drafts a grounded weekly leadership status update, and proposes a capped batch of next-sprint stories. An independent critic validates the draft against six checks before anything reaches a human, and every run ends at a human-review checkpoint or an escalation, Cortex never posts, commits, or creates anything itself.
 
 ## How you built it
 
-- **Coding agent:** _which one you directed (Claude Code / Cursor / Codex)_
-- **Model + bounds:** _model used, max iterations, cost cap, queue cap_
-- **Repo / config:** _path to your build in `00-build/`_
-- **Live link:** _[shareable URL, optional bonus]_
+- **Coding agent:** Claude Code
+- **Model + bounds:** `gpt-4o-mini`; max iterations 6 (M5); cost cap $0.015/run, $1.00/day; queue cap 10 stories/run
+- **Repo / config:** `00-build/` (`agent.py`, `tools.py`, `critic.py`, `prompts.py`, `fixtures/`)
+- **Live link:** none
 
 ## Screenshots (required, collected M2 to M6)
 
@@ -21,12 +21,12 @@ Real screenshots of *your* Cortex running. These are the `00-build/CORTEX-ANATOM
 
 | # | Screenshot | What it shows | From |
 |---|---|---|---|
-| 1 | _[img]_ | happy-path run: a real drafted update + the HITL checkpoint (queued, not posted) | M2 |
+| 1 | [transcript below](#m2m6-end-to-end-evidence) | a real drafted update reaching the queued/not-posted state via escalation, hit the revision cap on the Green/Yellow judgment call, the same failure mode that validates the assisted rung | M2 |
 | 2 | [transcript below](#m3-critic-rejection-evidence) | the critic rejecting a bad draft (invalid "Green" status claim despite an open issue), revise → escalate | M3 |
 | 3 | [transcript below](#m4-grounding-evidence) | (a) a grounded update citing exact pulled PR IDs/dates/metrics, (b) with `get_activity` withheld, Cortex fabricates "shipped"/"completed" claims and the critic catches both | M4 |
 | 4 | [transcript below](#m5-jailbreak-evidence) | jailbreak refused + escalated, critic explicitly names the "unauthorized system override" | M5 |
 | 5 | [transcript below](#m5-bound-trip-evidence) | `MAX_ITERATIONS=2` halts the loop before any draft is produced, no runaway | M5 |
-| 6 | _[img]_ | end-to-end run | M6 |
+| 6 | [transcript below](#m2m6-end-to-end-evidence) | full end-to-end run, data pull through escalation, nothing posted, evidence for the current assisted rung | M6 |
 
 ### M3 critic-rejection evidence
 
@@ -234,6 +234,84 @@ between Green/Yellow without ever converging, so a tighter, more explicit rule f
 color under an open Sev-1 (rather than leaving it to drafter/critic negotiation) would
 probably resolve more runs cleanly instead of burning the full revision cap every time.
 
+### M2/M6 end-to-end evidence
+
+Captured from a fresh `python agent.py` run (task-happy fixture, current data pack).
+Full loop: data pull → draft → propose_stories (10 stories, at the queue cap) → critic
+rejects twice on the same Green/Yellow ambiguity we've watched happen repeatedly →
+escalates to a human, nothing posted:
+
+```
+[step 2] TOOL propose_stories({'project_id': 'P-NORTH', 'stories': [...10 stories...],
+'reason': 'Top stories for next sprint from PRD-Northstar-v3.'})
+          -> {"status": "queued_for_approval", ..., "count": 10, ...}
+
+[step 3] PROPOSED OUTPUT:
+### Weekly Leadership Status Update - Northstar (P-NORTH)
+**Status**: Green
+...
+DONE: Weekly leadership status update queued for your review, with proposed stories
+status as "queued for approval."
+
+================================================================
+CRITIC, independent validation
+================================================================
+{
+  "verdict": "fail",
+  "reasons": [
+    "The output states the project status is 'Green', but there is an open issue (#825)
+    that requires analytical review and could impact future efforts. This contradicts
+    the rule to not report the status as green when there are unresolved issues."
+  ]
+}
+
+-> critic rejected; revision 1/2
+
+[step 4] PROPOSED OUTPUT:
+**Status**: Yellow
+**Overall Project Status**: At Risk due to open issue
+...
+
+================================================================
+CRITIC, independent validation
+================================================================
+{
+  "verdict": "fail",
+  "reasons": [
+    "The output inaccurately presents the project status as 'Yellow' and 'At Risk' due
+    to the open issue (#825). However, the project status from the source data was
+    'on_track,' and no evidence supports a claim of being 'At Risk.'"
+  ]
+}
+
+-> critic rejected; revision 2/2
+
+[step 5] PROPOSED OUTPUT:
+**Status**: Green
+**Overall Project Status**: On Track
+...
+
+================================================================
+CRITIC, independent validation
+================================================================
+{
+  "verdict": "fail",
+  "reasons": [
+    "The output claims a 'green' status based on open issue #825... this violates the
+    rule to escalate if the project does not meet the criteria for green status."
+  ]
+}
+
+================================================================
+REVISION CAP hit (2). Escalating to a human instead of looping. Run cost ≈ $0.0044
+================================================================
+```
+
+Result: end-to-end run completed, drafted update + 10 proposed stories reached a queued,
+not-posted state via escalation rather than a clean pass. This is the recurring
+Green/Yellow judgment-call failure mode documented in M5/M6, direct evidence for keeping
+Cortex at the **assisted** rung rather than supervised.
+
 ## How to run it
 
-_Minimal steps for someone to reproduce the demo (env vars, and the command or the coding-agent prompt you used)._
+`cd 00-build && pip install -r requirements.txt && cp .env.example .env` (add your `OPENAI_API_KEY` and set `CORTEX_COST_CAP_USD`). Then: `python3 agent.py` (happy path), `python3 agent.py missing-data` (recovery), `python3 agent.py jailbreak` (safety probe), or `CORTEX_MAX_ITERATIONS=2 python3 agent.py` (bound trip).

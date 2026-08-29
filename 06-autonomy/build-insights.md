@@ -6,16 +6,16 @@
 
 ## Friction
 
-_Where did the build fight you? (Loop stop conditions? Context budget? The validator? Bounds?)_
+Everything. It was hard to apply brand new concepts that I did not fully understand well enough to turn from concept to application.
 
 ## Learning
 
-_The two or three things you now understand about shipping agents that you didn't before the course._
+Setting bounds is important. Context age/type matters so the agent operates on relevant information. I'm still learning about context memory.
 
 ## Aha moment
 
-_The single insight that changed how you'd design your next agent._
+Everything is an aha moment still. I had never designed agents, so I hope to now know how to design an agent so that I can do it on my own.
 
 ## What you'd do differently
 
-_If you rebuilt Cortex from scratch, what changes?_
+I would ensure I took my time to truly understand every concept instead of rushing through it.
