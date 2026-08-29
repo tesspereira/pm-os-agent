@@ -54,25 +54,28 @@ Stop and ask me at every decision."* If your assistant can't read files (plain C
 
 | # | Deliverable | Module | Status | File |
 |---|---|---|---|---|
-| 1 | **Working agent demo** (real run screenshots; link optional) | Built across labs | ☐ | `06-autonomy/prototype.md` |
-| 2 | **Loop Spec** | M2 | ☐ | `02-loop-design/loop-spec.md` |
-| 3 | **Orchestration Map** | M3 | ☐ | `03-orchestration/orchestration-map.md` |
-| 4 | **Insights: build process** | M6 | ☐ | `06-autonomy/build-insights.md` |
-| 5 | **Bounds, trust & autonomy strategy** | M6 | ☐ | `06-autonomy/production-and-autonomy.md` |
+| 1 | **Working agent demo** (real run screenshots; link optional) | Built across labs | ✅ | `06-autonomy/prototype.md` |
+| 2 | **Loop Spec** | M2 | ✅ | `02-loop-design/loop-spec.md` |
+| 3 | **Orchestration Map** | M3 | ✅ | `03-orchestration/orchestration-map.md` |
+| 4 | **Insights: build process** | M6 | ✅ | `06-autonomy/build-insights.md` |
+| 5 | **Bounds, trust & autonomy strategy** | M6 | ✅ | `06-autonomy/production-and-autonomy.md` |
+
+**Pitch deck:** [Cortex Field Report](https://claude.ai/code/artifact/8c0e3ac9-c2a8-4b10-b0a8-ff6e613f8c6d), a one-page summary of all six modules, the six run proofs, and the autonomy plan.
 
 ## The agent in one sentence
 
-_What does your agent do, for whom, and where is the agent line, what does it decide vs. what stays human?_
+Cortex is a PM chief-of-staff agent that pulls project state, engineering activity, roadmap, norms, and past-update precedent to draft a grounded weekly leadership status update and propose a capped batch of next-sprint stories, an independent critic checks it against six rules first, and every run ends at a human-review checkpoint or an escalation, Cortex never posts, commits, or creates anything itself.
 
 ## Build & demo
 
-- **How you built it:** _which coding agent (Claude Code / Cursor / Codex) you directed, start in `00-build/`_
-- **Demo link:** _[optional shareable URL]_
-- **Run screenshots:** _required, collected M2 to M6 in `06-autonomy/prototype.md`_
+- **How you built it:** Directed via Claude Code, starting from `00-build/` (`agent.py`, `tools.py`, `critic.py`, `prompts.py`, `fixtures/`).
+- **Model + bounds:** `gpt-4o-mini`; max 6 iterations; $0.015/run, $1.00/day cost cap; 10-story queue cap; 2 revision cap.
+- **Demo link:** none (repo + deck above).
+- **Run screenshots:** all six required proofs are captured in `06-autonomy/prototype.md` (happy path, critic rejection, grounding probe, jailbreak refusal, bound trip, end-to-end run).
 
 ## Where it sits on the Trust Ladder
 
-_shadow · assisted · supervised · bounded-autonomous · autonomous, which rung today, and what eval evidence would let it climb the next one?_
+**Current rung: Assisted.** Cortex completes tasks end-to-end mechanically, but real runs this session repeatedly hit the revision cap on an ambiguous Green/Yellow status call and once resolved a project ID incorrectly, evidence it hasn't yet earned Supervised. Eval gate to climb: ≥95% first-pass critic approval across all 6 EV cases and zero safety-case failures, sustained over 4 consecutive weeks of real runs, with a clean incident record (no posts, no confidential leaks, no gates marked, no dates committed). Full plan in `06-autonomy/production-and-autonomy.md`.
 
 ---
 
